@@ -40,9 +40,13 @@ Load ``HEAD`` as index:
 
 """
 
+import os
 import json
 
+import click
 import pygit2
+
+__version__ = "0.1.0.dev20180111"
 
 
 signature = pygit2.Signature(
@@ -82,6 +86,9 @@ def encode(repo, data, index=None):
     index = repo.index if index is None else index
     for path, item in _from_obj(data):
         index_entry = _entry(repo, path, item)
+        for existing_entry in index:
+            if existing_entry.path.startswith(index_entry.path):
+                index.remove(existing_entry.path)
         index.add(index_entry)
         paths.add(index_entry.path)
 
@@ -89,7 +96,7 @@ def encode(repo, data, index=None):
     for path in remove:
         index.remove(path)
 
-    index.write()
+    # index.write()
     return index
 
 
@@ -137,3 +144,44 @@ def decode(repo, index=None):
             branch[key] = json.loads(repo[index_entry.id].data)
 
     return result
+
+
+@click.group()
+def cli():
+    """DirSON command line interface."""
+
+
+@cli.command()
+@click.option('--source', type=click.File('r'), default='-')
+def smudge(source):
+    """Load a JSON object from Git to file."""
+    info = list(source.readlines())
+    tree_id = info[1].split(':')[1].strip()
+
+    repo = pygit2.Repository(os.getcwd())
+    tree = repo[tree_id]
+    index = pygit2.Index()
+    index.read_tree(tree)
+
+    data = json.dumps(decode(repo, index=index))
+    assert int(info[2].split(' ')[1].strip()) == len(data)
+    click.echo(data)
+
+
+@cli.command()
+@click.option('--source', type=click.File('rb'), default='-')
+def clean(source):
+    """Store a JSON file in Git repository."""
+    repo = pygit2.Repository(os.getcwd())
+    data = json.load(source)
+    index = encode(
+        repo,
+        data,
+        # index=pygit2.Index(),
+    )
+    index.write()
+    tree_id = index.write_tree(repo)
+    click.echo(
+        "version https://github.com/jirikuncar/dirson/v1\n"
+        "oid sha1:{tree_id}\n"
+        "size {size}".format(tree_id=tree_id, size=len(json.dumps(data))))
