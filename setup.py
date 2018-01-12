@@ -40,7 +40,7 @@ for name, reqs in extras_require.items():
 
 install_requires = [
     'click>=6.7',
-    'pygit2>=0.26.3',
+    'dulwich>=0.18.6',
 ]
 
 setup(

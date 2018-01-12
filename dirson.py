@@ -22,37 +22,26 @@ Quickstart
 ----------
 
 >>> import dirson
->>> from pygit2 import init_repository
->>> repo = init_repository('/tmp/storage', bare=True)
->>> dirson.encode(repo, {'a': {'b': 1}})
->>> tree = repo.index.write_tree()
->>> parent = [] if repo.head_is_unborn else repo.head.target
->>> first_commit = repo.create_commit(
-...     'refs/heads/master',
-...     dirson.signature,
-...     dirson.signature,
-...     tree,
-...     parent)
-
-Load ``HEAD`` as index:
-
->>> repo.index.read_tree(repo[repo.head.target].tree)
+>>> from dulwich.repo import Repo
+>>> repo = Repo('/tmp/storage')
+>>> tree_id = dirson.encode(repo, {'a': {'b': 1}})
+>>> dirson.decode(repo, tree_id)
+{'a': {'b': 1}}
 
 """
 
-import os
 import json
+import os
+import stat
 
 import click
-import pygit2
+from dulwich.index import pathjoin, pathsplit
+from dulwich.objects import Blob, Tree
+from dulwich.repo import Repo
 
 __version__ = "0.1.0.dev20180111"
 
-
-signature = pygit2.Signature(
-    'DirSON',
-    'jiri.kuncar+dirson@gmail.com'
-)
+GIT_FILEMODE_BLOB = 33188
 
 
 def _from_obj(obj):
@@ -71,33 +60,44 @@ def _from_obj(obj):
             yield path, item
 
 
-def _entry(repo, path, item):
-    """Create an instance of ``IndexEntry``."""
-    return pygit2.IndexEntry(
-        '/'.join(path),
-        repo.create_blob(json.dumps(item)),
-        pygit2.GIT_FILEMODE_BLOB,
-    )
+def encode(repo, data):
+    """Create new tree in a repo."""
+    trees = {b'': {}}
 
+    def add_tree(path):
+        if path in trees:
+            return trees[path]
+        dirname, basename = pathsplit(path)
+        t = add_tree(dirname)
+        assert isinstance(basename, bytes)
+        newtree = {}
+        t[basename] = newtree
+        trees[path] = newtree
+        return newtree
 
-def encode(repo, data, index=None):
-    """Update index with new data and removes unused ones."""
-    paths = set()
-    index = repo.index if index is None else index
     for path, item in _from_obj(data):
-        index_entry = _entry(repo, path, item)
-        for existing_entry in index:
-            if existing_entry.path.startswith(index_entry.path):
-                index.remove(existing_entry.path)
-        index.add(index_entry)
-        paths.add(index_entry.path)
+        tree_path = '/'.join(path[:-1]).encode('utf-8')
+        basename = path[-1].encode('utf-8')
+        tree = add_tree(tree_path)
 
-    remove = set(index_entry.path for index_entry in index) - paths
-    for path in remove:
-        index.remove(path)
+        blob = Blob.from_string(json.dumps(item).encode('utf-8'))
+        repo.object_store.add_object(blob)
 
-    # index.write()
-    return index
+        tree[basename] = (GIT_FILEMODE_BLOB, blob.id)
+
+    def build_tree(path):
+        tree = Tree()
+        for basename, entry in trees[path].items():
+            if isinstance(entry, dict):
+                mode = stat.S_IFDIR
+                sha = build_tree(pathjoin(path, basename))
+            else:
+                (mode, sha) = entry
+            tree.add(basename, mode, sha)
+        repo.object_store.add_object(tree)
+        return tree.id
+
+    return build_tree(b'')
 
 
 def _path_defaults(path):
@@ -106,44 +106,25 @@ def _path_defaults(path):
         yield json.loads(key)
 
 
-def decode(repo, index=None):
+def decode(repo, tree_id):
     """Decode index to a Python structure."""
-    index = repo.index if index is None else index
-    result = None
+    tree = repo[tree_id]
 
-    for index_entry in index:
-        parts = list(_path_defaults(index_entry.path.split('/')))
+    if tree.type_name == b'tree':
+        items = [(json.loads(item.path, encoding='utf-8'), item.sha)
+                 for item in tree.items()]
+        if all((isinstance(key[0], str) for key in items)):
+            return {key: decode(repo, sha) for key, sha in items}
+        elif all((isinstance(key[0], int) for key in items)):
+            items = ((int(key), decode(repo, sha)) for key, sha in items)
+            return [item[1] for item in sorted(items)]
 
-        key = parts[0]
-        if result is None:
-            result = [] if isinstance(key, int) else {}
+        raise TypeError('Mixed values in: {0}'.format(tree))
 
-        branch = result
-        for next_key in parts[1:]:
-            if isinstance(key, int):
-                try:
-                    branch = branch[key]
-                except IndexError:
-                    branch.extend((
-                        [] if isinstance(next_key, int) else {}
-                        for i in range(1 + key - len(branch))
-                    ))
-                    branch = branch[key]
-            else:
-                branch = branch.setdefault(
-                    key,
-                    [] if isinstance(next_key, int) else {}
-                )
-            key = next_key
+    elif tree.type_name == b'blob':
+        return json.loads(tree.data, encoding='utf-8')
 
-        key = parts[-1]
-        value = json.loads(repo[index_entry.id].data)
-        if isinstance(key, int):
-            branch.insert(key, value)
-        else:
-            branch[key] = json.loads(repo[index_entry.id].data)
-
-    return result
+    raise TypeError('Invalid object: {0}'.format(tree))
 
 
 @click.group()
@@ -152,36 +133,31 @@ def cli():
 
 
 @cli.command()
-@click.option('--source', type=click.File('r'), default='-')
-def smudge(source):
+@click.option('--source', type=click.File('rb'), default='-')
+@click.option('--git', type=click.Path(exists=True), default='.')
+def smudge(source, git):
     """Load a JSON object from Git to file."""
     info = list(source.readlines())
-    tree_id = info[1].split(':')[1].strip()
+    tree_id = info[1].split(b':')[1].strip()
 
-    repo = pygit2.Repository(os.getcwd())
-    tree = repo[tree_id]
-    index = pygit2.Index()
-    index.read_tree(tree)
-
-    data = json.dumps(decode(repo, index=index))
-    assert int(info[2].split(' ')[1].strip()) == len(data)
+    repo = Repo(git)
+    data = json.dumps(decode(repo, tree_id))
+    assert int(info[2].split(b' ')[1].strip()) == len(data)
     click.echo(data)
 
 
 @cli.command()
 @click.option('--source', type=click.File('rb'), default='-')
-def clean(source):
+@click.option('--git', type=click.Path(exists=True), default='.')
+def clean(source, git):
     """Store a JSON file in Git repository."""
-    repo = pygit2.Repository(os.getcwd())
+    repo = Repo(git)
     data = json.load(source)
     index = encode(
         repo,
         data,
-        # index=pygit2.Index(),
     )
-    index.write()
-    tree_id = index.write_tree(repo)
-    click.echo(
-        "version https://github.com/jirikuncar/dirson/v1\n"
-        "oid sha1:{tree_id}\n"
-        "size {size}".format(tree_id=tree_id, size=len(json.dumps(data))))
+    click.echo("version https://github.com/jirikuncar/dirson/v1\n"
+               "oid sha1:{index}\n"
+               "size {size}".format(
+                   index=index.decode('ascii'), size=len(json.dumps(data))))
