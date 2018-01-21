@@ -33,6 +33,7 @@ Quickstart
 import json
 import os
 import stat
+import warnings
 
 import click
 from dulwich.index import pathjoin, pathsplit
@@ -142,7 +143,13 @@ def smudge(source, git):
 
     repo = Repo(git)
     data = json.dumps(decode(repo, tree_id))
-    assert int(info[2].split(b' ')[1].strip()) == len(data)
+
+    orig_size = int(info[2].split(b' ')[1].strip())
+    curr_size = len(data)
+    if orig_size != curr_size:
+        warnings.warn('Source size has changed from {0} to {1}.'.format(
+            orig_size, curr_size))
+
     click.echo(data)
 
 
