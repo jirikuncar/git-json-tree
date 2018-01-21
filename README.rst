@@ -11,9 +11,6 @@
 .. image:: https://img.shields.io/github/tag/jirikuncar/git-json-tree.svg
    :target: https://github.com/jirikuncar/git-json-tree/releases
 
-.. image:: https://img.shields.io/pypi/dm/renga.svg
-   :target: https://pypi.python.org/pypi/renga
-
 .. image:: http://readthedocs.org/projects/git-json-tree/badge/?version=latest
    :target: http://git-json-tree.readthedocs.io/en/latest/?badge=latest
    :alt: Documentation Status
