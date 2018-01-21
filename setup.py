@@ -52,7 +52,7 @@ setup(
     author_email='jiri.kuncar+gjt@gmail.com',
     description=__doc__,
     long_description=open('README.rst').read(),
-    py_modules=['dirjson'],
+    py_modules=['git_json_tree'],
     zip_safe=False,
     include_package_data=True,
     platforms='any',

@@ -125,12 +125,34 @@ def decode(repo, tree_id):
     elif tree.type_name == b'blob':
         return json.loads(tree.data, encoding='utf-8')
 
+    elif tree.type_name == b'commit':
+        return decode(repo, tree.tree)
+
+    import ipdb
+    ipdb.set_trace()
+
     raise TypeError('Invalid object: {0}'.format(tree))
 
 
 @click.group()
 def cli():
-    """git_json_tree command line interface."""
+    """git-json-tree command line interface."""
+
+
+@cli.command(name='encode')
+@click.option('--source', type=click.File('rb'), default='-')
+@click.option('--git', type=click.Path(exists=True), default='.')
+def cli_encode(source, git):
+    """Encode a JSON object in a Git tree."""
+    click.echo(encode(Repo(git), json.load(source)))
+
+
+@cli.command(name='decode')
+@click.argument('oid', default='HEAD')
+@click.option('--git', type=click.Path(exists=True), default='.')
+def cli_decode(oid, git):
+    """Decode a Git tree to a JSON object."""
+    click.echo(json.dumps(decode(Repo(git), oid.encode('utf-8'))))
 
 
 @cli.command()
