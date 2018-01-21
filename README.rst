@@ -94,14 +94,13 @@ with a Git repository.
 .. code-block:: console
 
    $ echo '{"hello": "world", "version": 1}' | git-json-tree encode
-   abcd1234efgc
+   7123db01ad8c75a8df3508305bd891317ea36feb
 
 Following the above example you can create a first commit of your JSON object.
 
 .. code-block:: console
 
-   $ git commit-tree abcd1234efgc -m 'First commit'
-   1234cccc
+   $ FIRST=$(git commit-tree 7123db01 -m First)
 
 It is quite impractical to remember tree or commit sha1, hence we can give it
 a reference name. The next steps uses the name ``master``, but you can decide
@@ -110,7 +109,7 @@ file can have its own branch or just a single tag.
 
 .. code-block:: console
 
-   $ git update-ref refs/heads/master 1234cccc  # for new object
+   $ git update-ref refs/heads/master $FIRST  # for new object
 
 Storing a new version is very simple too.
 
@@ -118,15 +117,14 @@ Storing a new version is very simple too.
 
    $ export PARENT=$(git show-ref --hash refs/heads/master)
    $ echo '{"hello": "world", "version": 2}' | git-json-tree encode
-   abcd9876efgc
-   $ git commit-tree abcd9876efgc -m 'Update hello world' -p $PARENT
-   9876cccc
-   $ git update-ref refs/heads/master 9876cccc
+   6f36c4272e88b14ab5e25a5419599534504c70fc
+   $ SECOND=$(git commit-tree 6f36c4272e -m Second -p $PARENT)
+   $ git update-ref refs/heads/master $SECOND
 
 Finally, you can retrive and decode a tree or commit.
 
 .. code-block:: console
 
    $ git-json-tree decode  # HEAD
-   $ git-json-tree decode 1234cccc  # commit
-   $ git-json-tree decode abcd1234efgh  # tree id
+   $ git-json-tree decode $FIRST  # commit
+   $ git-json-tree decode 7123db01  # tree id
