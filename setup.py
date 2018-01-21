@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-"""DirSON."""
+"""Git-JSON-Tree."""
 
 import os
 import re
@@ -8,7 +8,7 @@ import re
 from setuptools import setup
 
 # Get the version string.  Cannot be done with import!
-with open(os.path.join('dirson.py'), 'rt') as f:
+with open(os.path.join('git_json_tree.py'), 'rt') as f:
     version = re.search(
         '__version__\s*=\s*"(?P<version>.*)"\n',
         f.read()
@@ -44,12 +44,12 @@ install_requires = [
 ]
 
 setup(
-    name='dirson',
+    name='git-json-tree',
     version=version,
-    url='http://github.com/jirikuncar/dirson/',
+    url='http://github.com/jirikuncar/git-json-tree/',
     license='MIT',
     author='Jiri Kuncar',
-    author_email='jiri.kuncar+dirson@gmail.com',
+    author_email='jiri.kuncar+gjt@gmail.com',
     description=__doc__,
     long_description=open('README.rst').read(),
     py_modules=['dirjson'],
@@ -79,7 +79,7 @@ setup(
     tests_require=tests_require,
     entry_points={
         'console_scripts': [
-            'dirson = dirson:cli',
+            'git-json-tree = git_json_tree:cli',
         ],
     },
 )

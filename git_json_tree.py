@@ -21,11 +21,11 @@
 Quickstart
 ----------
 
->>> import dirson
+>>> import git_json_tree
 >>> from dulwich.repo import Repo
 >>> repo = Repo('/tmp/storage')
->>> tree_id = dirson.encode(repo, {'a': {'b': 1}})
->>> dirson.decode(repo, tree_id)
+>>> tree_id = git_json_tree.encode(repo, {'a': {'b': 1}})
+>>> git_json_tree.decode(repo, tree_id)
 {'a': {'b': 1}}
 
 """
@@ -40,7 +40,7 @@ from dulwich.index import pathjoin, pathsplit
 from dulwich.objects import Blob, Tree
 from dulwich.repo import Repo
 
-__version__ = "0.1.0.dev20180111"
+__version__ = "0.1.0.dev20180121"
 
 GIT_FILEMODE_BLOB = 33188
 
@@ -130,7 +130,7 @@ def decode(repo, tree_id):
 
 @click.group()
 def cli():
-    """DirSON command line interface."""
+    """git_json_tree command line interface."""
 
 
 @cli.command()
@@ -164,7 +164,7 @@ def clean(source, git):
         repo,
         data,
     )
-    click.echo("version https://github.com/jirikuncar/dirson/v1\n"
+    click.echo("version https://github.com/jirikuncar/git-json-tree/v1\n"
                "oid sha1:{index}\n"
                "size {size}".format(
                    index=index.decode('ascii'), size=len(json.dumps(data))))

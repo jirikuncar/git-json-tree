@@ -1,5 +1,5 @@
-DirSON
-======
+Git-JSON-Tree
+=============
 
 Encode and decode JSON files as directory structure in Git.
 
@@ -19,26 +19,26 @@ add following lines to files:
 
 .. code-block::
 
-   [filter "dirson"]
-       smudge = "dirson smudge"
-       clean = "dirson clean"
+   [filter "git-json-tree"]
+       smudge = "git-json-tree smudge"
+       clean = "git-json-tree clean"
        required
 
 ``.gitattributes``
 
 .. code-block::
 
-   \*.json  filter=dirson
+   \*.json  filter=git-json-tree
 
 
 Pointer file format
 -------------------
 
-Git DirSON's pointer file looks like this:
+Git Git-JSON-Tree's pointer file looks like this:
 
 .. code-block::
 
-   version https://raw.githubusercontent.com/jirikuncar/dirson/v1/spec
+   version https://raw.githubusercontent.com/jirikuncar/git-json-tree/v1/spec
    oid sha1:2f769492d6b634b86b82e916630da8a693e9c20e
    size 12345
 
