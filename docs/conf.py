@@ -103,7 +103,26 @@ html_theme = 'alabaster'
 # further.  For a list of options available for each theme, see the
 # documentation.
 #
-# html_theme_options = {}
+html_theme_options = {
+    'description': '--json-in-git',
+    'github_user': 'jirikuncar',
+    'github_repo': 'git-json-tree',
+    'github_button': False,
+    'github_banner': False,
+    'logo': 'favicon.png',
+    'show_powered_by': False,
+    'extra_nav_links': {
+        'GitHub': 'https://github.com/jirikuncar/git-json-tree',
+        'PyPI': 'https://pypi.python.org/pypi/git-json-tree/',
+    },
+    'font_family': 'Source Code Pro,monospace',
+    'head_font_family': 'Source Code Pro,monospace',
+}
+
+# The name of an image file (within the static path) to use as favicon of the
+# docs.  This file should be a Windows icon file (.ico) being 16x16 or 32x32
+# pixels large.
+html_favicon = '_static/favicon.png'
 
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
@@ -117,7 +136,9 @@ html_static_path = ['_static']
 # refs: http://alabaster.readthedocs.io/en/latest/installation.html#sidebars
 html_sidebars = {
     '**': [
-        'relations.html',  # needs 'show_related': True theme option to display
+        'about.html',
+        'navigation.html',
+        'relations.html',
         'searchbox.html',
     ]
 }

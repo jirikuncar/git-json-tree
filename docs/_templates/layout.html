@@ -1,0 +1,14 @@
+{% extends "!layout.html" %}
+
+{%- block extrahead %}
+  {{ super() }}
+  <link href="https://fonts.googleapis.com/css?family=Source+Code+Pro:200,400,600,900&amp;subset=latin-ext" rel="stylesheet">
+  <link rel="dns-prefetch" href="//fonts.googleapis.com">
+{%- endblock extrahead %}
+
+{%- block content %}
+  <div class="git-ribbon">
+    <a href="http://github.com/{{ theme_github_user }}" rel="me">{{ _('Join us on GitHub') }}</a>
+  </div>
+  {{ super() }}
+{%- endblock content %}
