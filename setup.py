@@ -19,12 +19,14 @@ tests_require = [
     'coverage>=4.0',
     'coverage>=4.0.0',
     'isort>=4.2.2',
+    'hypothesis>=3.45.0',
     'mock>=1.0.0',
     'pydocstyle>=1.0.0',
     'pytest-cache>=1.0',
-    'pytest-cov>=2.1.0',
+    'pytest-cov>=2.5.1',
+    'pytest-isort>=0.1.0',
     'pytest-pep8>=1.0.6',
-    'pytest>=2.8.0',
+    'pytest>=3.4.0',
 ]
 
 extras_require = {

@@ -52,9 +52,16 @@ def _from_obj(obj):
     while stack:
         path, item = stack.pop()
         if isinstance(item, dict):
+            if not item:
+                yield path + ['.object'], None
+
             for key, value in item.items():
-                stack.insert(0, (path + ['"{0}"'.format(key)], value))
+                assert isinstance(key, str)
+                stack.insert(0, (path + [json.dumps(key)], value))
         elif isinstance(item, (tuple, list)):
+            if not item:
+                yield path + ['.array'], None
+
             for key, value in enumerate(item):
                 stack.insert(0, (path + [str(key)], value))
         else:
@@ -101,19 +108,22 @@ def encode(repo, data):
     return build_tree(b'')
 
 
-def _path_defaults(path):
-    """Yield path defaults."""
-    for key in path:
-        yield json.loads(key)
-
-
 def decode(repo, tree_id):
     """Decode index to a Python structure."""
     tree = repo[tree_id]
 
     if tree.type_name == b'tree':
         items = [(json.loads(item.path, encoding='utf-8'), item.sha)
-                 for item in tree.items()]
+                 for item in tree.items()
+                 if item.path not in {b'.object', b'.array'}]
+
+        if not items:
+            if b'.array' in tree:
+                return []
+            elif b'.object' in tree:
+                return {}
+            raise TypeError('Unknown tree type.')
+
         if all((isinstance(key[0], str) for key in items)):
             return {key: decode(repo, sha) for key, sha in items}
         elif all((isinstance(key[0], int) for key in items)):
