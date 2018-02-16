@@ -117,7 +117,7 @@ def decode(repo, tree_id):
     tree = repo[tree_id]
 
     if tree.type_name == b'tree':
-        items = [(json.loads(item.path, encoding='utf-8'), item.sha)
+        items = [(json.loads(item.path.decode('utf-8')), item.sha)
                  for item in tree.items()
                  if item.path not in {b'.object', b'.array'}]
 
@@ -137,13 +137,10 @@ def decode(repo, tree_id):
         raise TypeError('Mixed values in: {0}'.format(tree))
 
     elif tree.type_name == b'blob':
-        return json.loads(tree.data, encoding='utf-8')
+        return json.loads(tree.data.decode('utf-8'))
 
     elif tree.type_name == b'commit':
         return decode(repo, tree.tree)
-
-    import ipdb
-    ipdb.set_trace()
 
     raise TypeError('Invalid object: {0}'.format(tree))
 
