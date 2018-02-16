@@ -37,7 +37,7 @@ def json_data():
 
 
 @given(data=json_data())
-@settings(max_examples=1000, deadline=500)
+@settings(max_examples=1000, deadline=10000)
 def test_encode_decode(data, repo):
     """Test (d)encoding."""
     assume(isinstance(data, (dict, list)))

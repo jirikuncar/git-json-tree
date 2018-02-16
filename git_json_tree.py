@@ -56,7 +56,6 @@ def _from_obj(obj):
                 yield path + ['.object'], None
 
             for key, value in item.items():
-                assert isinstance(key, str)
                 stack.insert(0, (path + [json.dumps(key)], value))
         elif isinstance(item, (tuple, list)):
             if not item:
