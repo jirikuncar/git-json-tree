@@ -1,6 +1,7 @@
 """Test Git-JSON-Tree library."""
 
 import json
+import os
 from string import printable
 
 import hypothesis.strategies as st
@@ -15,13 +16,18 @@ from git_json_tree import cli, decode, encode
 @pytest.fixture()
 def repo(tmpdir):
     """Create a repo."""
-    yield Repo.init_bare(str(tmpdir))
+    curdir = os.getcwd()
+    try:
+        os.chdir(str(tmpdir))
+        yield Repo.init_bare(str(tmpdir))
+    finally:
+        os.chdir(curdir)
 
 
 @pytest.fixture()
 def runner(repo):
     """Define a click runner."""
-    return CliRunner()
+    yield CliRunner()
 
 
 def json_data():
