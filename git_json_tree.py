@@ -126,6 +126,7 @@ def decode(repo, tree_id):
                 return []
             elif b'.object' in tree:
                 return {}
+
             raise TypeError('Unknown tree type.')
 
         if all((isinstance(key[0], key_types) for key in items)):
@@ -151,7 +152,7 @@ def cli():
 
 
 @cli.command(name='encode')
-@click.option('--source', type=click.File('rb'), default='-')
+@click.option('--source', type=click.File('r'), default='-')
 @click.option('--git', type=click.Path(exists=True), default='.')
 def cli_encode(source, git):
     """Encode a JSON object in a Git tree."""
@@ -187,7 +188,7 @@ def smudge(source, git):
 
 
 @cli.command()
-@click.option('--source', type=click.File('rb'), default='-')
+@click.option('--source', type=click.File('r'), default='-')
 @click.option('--git', type=click.Path(exists=True), default='.')
 def clean(source, git):
     """Store a JSON file in Git repository."""
