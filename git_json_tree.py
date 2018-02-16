@@ -45,7 +45,7 @@ try:
 except:
     key_types = bytes, str
 
-__version__ = "0.1.0.dev20180121"
+__version__ = "0.1.0.dev20180216"
 
 GIT_FILEMODE_BLOB = 33188
 
