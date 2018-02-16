@@ -28,7 +28,8 @@ def json_data():
             st.lists(children) |
             st.dictionaries(
                 st.text(
-                    set(printable) - set('/')
+                    set(printable) - set('/'),
+                    min_size=1,
                 ),
                 children,
             ),

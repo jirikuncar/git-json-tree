@@ -40,6 +40,11 @@ from dulwich.index import pathjoin, pathsplit
 from dulwich.objects import Blob, Tree
 from dulwich.repo import Repo
 
+try:
+    key_types = str, unicode
+except:
+    key_types = bytes, str
+
 __version__ = "0.1.0.dev20180121"
 
 GIT_FILEMODE_BLOB = 33188
@@ -123,7 +128,7 @@ def decode(repo, tree_id):
                 return {}
             raise TypeError('Unknown tree type.')
 
-        if all((isinstance(key[0], str) for key in items)):
+        if all((isinstance(key[0], key_types) for key in items)):
             return {key: decode(repo, sha) for key, sha in items}
         elif all((isinstance(key[0], int) for key in items)):
             items = ((int(key), decode(repo, sha)) for key, sha in items)
