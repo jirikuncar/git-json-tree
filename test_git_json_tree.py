@@ -30,13 +30,13 @@ def runner(repo):
     yield CliRunner()
 
 
-def json_data():
+def json_data(allow_nan=True):
     """Generate JSON data."""
     return st.recursive(
         st.none() |
         st.booleans() |
         st.integers() |
-        st.floats(allow_nan=False) |
+        st.floats(allow_nan=allow_nan) |
         st.text(printable),
         lambda children:
             st.lists(children) |
@@ -56,10 +56,11 @@ def json_data():
 def test_encode_decode(data, repo):
     """Test (d)encoding."""
     assume(isinstance(data, (dict, list)))
-    assert decode(repo, encode(repo, data)) == data
+    repo_data = json.dumps(decode(repo, encode(repo, data)), sort_keys=True)
+    assert repo_data == json.dumps(data, sort_keys=True)
 
 
-@given(data=json_data())
+@given(data=json_data(allow_nan=False))
 @settings(max_examples=100, deadline=10000)
 def test_cli_encoder(data, runner):
     """Test cli encoder."""
@@ -71,7 +72,7 @@ def test_cli_encoder(data, runner):
     assert json.loads(decoded.output_bytes.decode('utf-8')) == data
 
 
-@given(data=json_data())
+@given(data=json_data(allow_nan=False))
 @settings(max_examples=100, deadline=10000)
 def test_smudge_clean(data, runner):
     """Test Git integration."""
